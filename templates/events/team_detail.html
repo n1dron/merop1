@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ team.name }}</h1>
+        <a href="{% url 'team_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к списку
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Информация о команде</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Вид спорта:</strong> {{ team.sport_type.name }}</p>
+                    <p><strong>Капитан:</strong> 
+                        {% if team.captain.get_full_name %}
+                            {{ team.captain.get_full_name }}
+                        {% else %}
+                            {{ team.captain.username }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Участников:</strong> {{ team.members.count }}/{{ team.required_players }}</p>
+                    {% if spots_left > 0 %}
+                        <p class="text-warning">Нужно ещё {{ spots_left }} игроков</p>
+                    {% else %}
+                        <p class="text-success">Команда укомплектована</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">Состав команды</h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                <!-- Капитан -->
+                <div class="list-group-item list-group-item-action active">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                {% if team.captain.get_full_name %}
+                                    {{ team.captain.get_full_name }}
+                                {% else %}
+                                    {{ team.captain.username }}
+                                {% endif %}
+                                <span class="badge bg-light text-dark ms-2">Капитан</span>
+                            </h6>
+                            <small>{{ team.captain.email }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Остальные участники -->
+                {% for member in regular_members %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                {% if member.get_full_name %}
+                                    {{ member.get_full_name }}
+                                {% else %}
+                                    {{ member.username }}
+                                {% endif %}
+                            </h6>
+                            <small class="text-muted">{{ member.email }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="list-group-item">
+                    <p class="mb-0 text-muted">В команде пока нет других участников</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Подтверждение удаления</h2>
+    
+    <div class="alert alert-danger">
+        <p>Вы уверены, что хотите удалить мероприятие <strong>"{{ object.title }}"</strong>?</p>
+        <p class="mb-0">Дата проведения: {{ object.date|date:"d.m.Y H:i" }}</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash-alt"></i> Да, удалить
+        </button>
+        <a href="{% url 'event_list' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Отмена
+        </a>
+    </form>
+</div>
+{% endblock %}
