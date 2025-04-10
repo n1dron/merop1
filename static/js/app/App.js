@@ -1,4 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import EventList from './components/EventList/EventList';
+import EventPage from './components/EventPage/EventPage';
+
+console.log('Router check:', { BrowserRouter, Routes, Route }); // Должны быть определены
+
+function App() {
+  return (
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route path="/" element={<EventList events={eventsData} />} />
+          <Route path="/event/:id" element={<EventPage events={eventsData} />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
 
 const App = () => {
   const [events, setEvents] = useState([]);
@@ -8,7 +26,7 @@ const App = () => {
   useEffect(() => {
     fetchEvents();
   }, []);
-
+  
   const fetchEvents = async (params = {}) => {
     setLoading(true);
     try {
@@ -51,5 +69,6 @@ const App = () => {
         <div className="no-events">Мероприятий не найдено</div>
       )}
     </div>
+    
   );
 };

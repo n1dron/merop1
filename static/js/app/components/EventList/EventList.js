@@ -1,18 +1,27 @@
 import React from 'react';
-import styles from './EventList.module.css';
+import { Link } from 'react-router-dom';
+import './EventList.css';
 
 const EventList = ({ events }) => {
+  // Временная функция для проверки клика
+  const handleClick = (id) => {
+    console.log('Clicked on event:', id); // Должно появляться в консоли при клике
+  };
+
   return (
-    <div className={styles.list}>
+    <div className="event-list">
       {events.map(event => (
-        <div key={event.id} className={styles.card}>
-          <h3>
-            <a href={`/events/${event.id}`}>{event.title}</a>
-          </h3>
-          <p>Вид спорта: {event.sport_type}</p>
-          <p>Дата: {event.date}</p>
-          <p>Место: {event.location}</p>
-        </div>
+        <Link 
+          to={`/event/${event.id}`} 
+          key={event.id}
+          className="event-card-link"
+          onClick={() => handleClick(event.id)}
+        >
+          <div className="event-card">
+            <h3>{event.title}</h3>
+            <p>{event.date} | {event.location}</p>
+          </div>
+        </Link>
       ))}
     </div>
   );

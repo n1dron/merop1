@@ -1,0 +1,13 @@
+.event-page {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+  }
+  
+  .event-page h1 {
+    margin-bottom: 15px;
+  }
+  
+  .event-page p {
+    margin: 8px 0;
+  }
