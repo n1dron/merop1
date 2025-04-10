@@ -9,33 +9,34 @@ from django.views.generic import (
 )
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+import json
+from django.core.serializers import serialize
+from django.http import JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
+from django.views.decorators.http import require_GET
 
 from .forms import EventFilterForm, EventForm
 from .models import Event, Team, ParticipationRequest
 from .mixins import TeacherRequiredMixin
 
 
+@require_GET
 def event_list(request):
-    events = Event.objects.all()
-    form = EventFilterForm(request.GET)
+    events = Event.objects.all().order_by('-date')  # Сортировка по дате
+    form = EventFilterForm(request.GET or None)
     
     if form.is_valid():
-        sport_type = form.cleaned_data.get('sport_type')
-        date_from = form.cleaned_data.get('date_from')
-        date_to = form.cleaned_data.get('date_to')
-        
-        if sport_type:
-            events = events.filter(sport_type=sport_type)
-        if date_from:
-            events = events.filter(date__gte=date_from)
-        if date_to:
-            events = events.filter(date__lte=date_to)
-    
+        if form.cleaned_data['sport_type']:
+            events = events.filter(sport_type=form.cleaned_data['sport_type'])
+        if form.cleaned_data['date_from']:
+            events = events.filter(date__gte=form.cleaned_data['date_from'])
+        if form.cleaned_data['date_to']:
+            events = events.filter(date__lte=form.cleaned_data['date_to'])
+
     return render(request, 'events/event_list.html', {
         'events': events,
         'form': form
     })
-
 
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
