@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mb-0">{{ event.title }}</h1>
+                <span class="badge bg-primary">{{ event.sport_type.name }}</span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong><i class="fas fa-calendar-alt"></i> Дата и время:</strong> 
+                    {{ event.date|date:"d.m.Y H:i" }}</p>
+                    
+                    <p><strong><i class="fas fa-map-marker-alt"></i> Место проведения:</strong> 
+                    {{ event.location }}</p>
+                    
+                    <p><strong><i class="fas fa-user"></i> Организатор:</strong> 
+                    {{ event.organizer.get_full_name|default:event.organizer.username }}</p>
+                    
+                    {% if event.max_teams > 0 %}
+                    <p><strong>Команд:</strong> {{ event.teams.count }} / {{ event.max_teams }}</p>
+                    {% endif %}
+                </div>
+                
+                {% if event.image %}
+                <div class="col-md-6">
+                    <img src="{{ event.image.url }}" class="img-fluid rounded" alt="{{ event.title }}">
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <h3><i class="fas fa-align-left"></i> Описание</h3>
+                <p>{{ event.description|linebreaks }}</p>
+                
+                {% if event.equipment %}
+                <h4><i class="fas fa-tools"></i> Необходимое оборудование</h4>
+                <p>{{ event.equipment }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="participants-section">
+                <h3><i class="fas fa-users"></i> Участники ({{ event.teams.count }})</h3>
+                
+                {% if event.teams.all %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Команда</th>
+                                <th>Участников</th>
+                                <th>Дата регистрации</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in event.teams.all %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'team_detail' team.pk %}">
+                                        {{ team.name }} ({{ team.sport_type }})
+                                    </a>
+                                </td>
+                                <td>{{ team.members.count }}</td>
+                                <td>
+                                    {% for participant in event.eventparticipant_set.all %}
+                                        {% if participant.team_id == team.id %}
+                                            {{ participant.date_joined|date:"d.m.Y" }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Пока нет участников
+                </div>
+                {% endif %}
+                
+                <!-- Блок участия -->
+                {% if can_join %}
+                    {% if already_participating %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check-circle"></i> 
+                        Ваша команда "{{ user_team.name }}" уже участвует в этом мероприятии
+                    </div>
+                    {% else %}
+                    <form method="post" action="{% url 'join_event' event.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        {% if user_teams.count > 1 %}
+                        <div class="mb-3">
+                            <label for="team-select" class="form-label">Выберите команду:</label>
+                            <select name="team_id" id="team-select" class="form-select">
+                                {% for team in user_teams %}
+                                <option value="{{ team.pk }}">{{ team.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus-circle"></i> 
+                            {% if user_teams.count > 1 %}
+                                Участвовать с выбранной командой
+                            {% else %}
+                                Участвовать с командой "{{ user_team.name }}"
+                            {% endif %}
+                        </button>
+                    </form>
+                    {% endif %}
+                {% elif request.user.is_authenticated %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Для участия нужно состоять в команде по {{ event.sport_type.name }}
+                    {% if user_teams %}
+                    <br><small>Ваши команды: 
+                    {% for team in user_teams %}
+                        {{ team.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    </small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card-footer text-muted">
+            <small>
+                Создано: {{ event.created_at|date:"d.m.Y H:i" }}
+                {% if event.modified_at != event.created_at %}
+                <br>Изменено: {{ event.modified_at|date:"d.m.Y H:i" }}
+                {% endif %}
+            </small>
+            
+            {% if request.user == event.organizer or request.user.is_superuser %}
+            <div class="mt-2">
+                <a href="{% url 'event_update' event.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i> Редактировать
+                </a>
+                <a href="{% url 'event_delete' event.pk %}" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .img-fluid {
+        max-height: 250px;
+        object-fit: cover;
+        border-radius: 0.25rem;
+    }
+    
+    .participants-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    
+    .table th {
+        border-top: none;
+        background-color: #f8f9fa;
+    }
+    
+    .badge {
+        font-size: 0.9em;
+        font-weight: 500;
+        padding: 0.5em 0.75em;
+    }
+</style>
+{% endblock %}

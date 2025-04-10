@@ -19,6 +19,7 @@ urlpatterns = [
     # Мероприятия
     path('events/', event_views.event_list, name='event_list'),
     path('events/<int:pk>/', event_views.event_detail, name='event_detail'),
+    path('events/<int:pk>/join/', event_views.join_event, name='join_event'),
     path('events/<int:pk>/delete/', event_views.EventDeleteView.as_view(), name='event_delete'),
     path('events/<int:pk>/edit/', event_views.EventUpdateView.as_view(), name='event_update'),
     path('events/add/', event_views.EventCreateView.as_view(), name='event_create'),

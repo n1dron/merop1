@@ -104,7 +104,7 @@ class Team(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.sport_type})"
     
     @property
     def member_count(self):
@@ -163,3 +163,23 @@ class ParticipationRequest(models.Model):
     
     def __str__(self):
         return f"{self.user} → {self.team} ({self.status})"
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # Дополнительные поля профиля
+    
+    def __str__(self):
+        return self.user.username
+
+class EventParticipant(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='participants')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    date_joined = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('event', 'team')
+        verbose_name = 'Участник мероприятия'
+        verbose_name_plural = 'Участники мероприятий'
+    
+    def __str__(self):
+        return f"{self.team.name} в {self.event.title}"

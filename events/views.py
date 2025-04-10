@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from .models import EventParticipant
 from django.views.generic import (
     ListView, DetailView, CreateView, 
     UpdateView, DeleteView, TemplateView, View
@@ -14,7 +15,7 @@ from django.core.serializers import serialize
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.views.decorators.http import require_GET
-
+from .models import Event, Team, UserProfile
 from .forms import EventFilterForm, EventForm
 from .models import Event, Team, ParticipationRequest
 from .mixins import TeacherRequiredMixin
@@ -37,11 +38,6 @@ def event_list(request):
         'events': events,
         'form': form
     })
-
-def event_detail(request, pk):
-    event = get_object_or_404(Event, pk=pk)
-    return render(request, 'events/event_detail.html', {'event': event})
-
 
 def team_list(request):
     teams = Team.objects.all().select_related('sport_type', 'captain').prefetch_related('members')
@@ -235,3 +231,59 @@ class BulkApproveView(TeacherRequiredMixin, View):
         ParticipationRequest.objects.filter(id__in=selected).update(status='approved')
         messages.success(request, f'{len(selected)} заявок одобрено')
         return redirect('request_list')
+    
+def event_detail(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+    user = request.user
+    can_join = False
+    already_participating = False
+    user_team = None
+    
+    if user.is_authenticated:
+        try:
+            # Ищем команды пользователя того же типа спорта, что и мероприятие
+            user_teams = Team.objects.filter(
+                members__user=user,
+                sport_type=event.sport_type
+            )
+            
+            if user_teams.exists():
+                user_team = user_teams.first()
+                can_join = True
+                already_participating = event.teams.filter(id=user_team.id).exists()
+                
+        except Exception as e:
+            print(f"Error checking user teams: {e}")
+    
+    context = {
+        'event': event,
+        'can_join': can_join,
+        'already_participating': already_participating,
+        'user_team': user_team,
+    }
+    return render(request, 'events/event_detail.html', context)
+
+@login_required
+def join_event(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+    
+    try:
+        user_team = Team.objects.get(
+            members__user=request.user,
+            sport_type=event.sport_type
+        )
+        
+        if event.max_teams > 0 and event.teams.count() >= event.max_teams:
+            messages.error(request, "Достигнуто максимальное количество команд")
+        elif event.teams.filter(id=user_team.id).exists():
+            messages.warning(request, "Ваша команда уже участвует")
+        else:
+            event.teams.add(user_team)
+            messages.success(request, f"Команда '{user_team.name}' зарегистрирована на мероприятие!")
+            
+    except Team.DoesNotExist:
+        messages.error(request, f"Вы не состоите в команде по {event.sport_type.name}")
+    except Exception as e:
+        messages.error(request, f"Ошибка: {str(e)}")
+    
+    return redirect('event_detail', pk=pk)

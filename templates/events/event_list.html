@@ -2,32 +2,112 @@
 {% load static %}
 
 {% block content %}
-<h1>Мероприятия</h1>
+<div class="container">
+    <h1 class="my-4">Мероприятия</h1>
 
-<form method="get" class="mb-4">
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Фильтровать</button>
-</form>
+    <!-- Форма фильтрации -->
+    <form method="get" class="mb-4 p-3 bg-light rounded">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="{{ form.sport_type.id_for_label }}" class="form-label">Вид спорта</label>
+                    {{ form.sport_type }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="{{ form.date_from.id_for_label }}" class="form-label">Дата от</label>
+                    {{ form.date_from }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="{{ form.date_to.id_for_label }}" class="form-label">Дата до</label>
+                    {{ form.date_to }}
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel"></i> Фильтровать
+        </button>
+        <a href="{% url 'event_list' %}" class="btn btn-outline-secondary ms-2">
+            <i class="bi bi-arrow-counterclockwise"></i> Сбросить
+        </a>
+    </form>
 
-{% if events %}
-<div class="list-group">
-    {% for event in events %}
-    <div class="list-group-item">
-        <div class="d-flex justify-content-between">
-            <h5>{{ event.title }}</h5>
-            <span class="badge bg-secondary">{{ event.sport_type }}</span>
+    <!-- Список мероприятий -->
+    {% if events %}
+    <div class="row">
+        {% for event in events %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 event-card">
+                <a href="{% url 'event_detail' event.id %}" class="text-decoration-none text-dark">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ event.title }}</h5>
+                        <span class="badge bg-{{ event.sport_type.color|default:'secondary' }}">
+                            {{ event.sport_type }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2 text-muted">
+                            <i class="bi bi-calendar"></i> {{ event.date|date:"d.m.Y H:i" }}
+                        </div>
+                        <div class="mb-2 text-muted">
+                            <i class="bi bi-geo-alt"></i> {{ event.location }}
+                        </div>
+                        {% if event.description %}
+                        <p class="card-text">{{ event.description|truncatechars:150 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                {% if event.participants_count %}
+                                {{ event.participants_count }} участников
+                                {% else %}
+                                Пока нет участников
+                                {% endif %}
+                            </small>
+                            <span class="badge bg-info">
+                                Подробнее <i class="bi bi-chevron-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
-        <div class="text-muted mb-2">
-            <i class="bi bi-calendar"></i> {{ event.date|date:"d.m.Y H:i" }}
-            <i class="bi bi-geo-alt ms-3"></i> {{ event.location }}
-        </div>
-        {% if event.description %}
-        <p>{{ event.description }}</p>
-        {% endif %}
+        {% endfor %}
     </div>
-    {% endfor %}
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Мероприятий не найдено. Попробуйте изменить параметры фильтрации.
+    </div>
+    {% endif %}
 </div>
-{% else %}
-<div class="alert alert-info">Мероприятий не найдено</div>
-{% endif %}
+
+<style>
+    .event-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid rgba(0,0,0,0.125);
+    }
+    
+    .event-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        text-decoration: none;
+    }
+    
+    .card-header {
+        background-color: rgba(0,0,0,0.03);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0.25rem;
+    }
+    
+    .badge {
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+</style>
 {% endblock %}
