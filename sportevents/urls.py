@@ -16,6 +16,7 @@ urlpatterns = [
     path('logout/', user_views.user_logout, name='logout'),
     path('profile/', user_views.profile, name='profile'),
     
+    
     # Мероприятия
     path('events/', event_views.event_list, name='event_list'),
     path('events/<int:pk>/', event_views.event_detail, name='event_detail'),
